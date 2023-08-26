@@ -17,6 +17,13 @@ go-rwkv
 whisper.cpp
 /bloomz
 go-bert
+/hf-cache
+./hf-cache
+./hf-cache/*
+hf-cache
+/models
+./models
+models
 
 # LocalAI build binary
 LocalAI
