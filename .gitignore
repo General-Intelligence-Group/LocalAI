@@ -10,21 +10,16 @@ go-ggllm
 __pycache__/
 *.a
 get-sources
-
 go-ggml-transformers
 go-gpt2
 go-rwkv
 whisper.cpp
 /bloomz
 go-bert
-/hf-cache
-./hf-cache
-./hf-cache/*
-hf-cache
-/models
-./models
-models
 
+models
+data
+.env
 # LocalAI build binary
 LocalAI
 local-ai
