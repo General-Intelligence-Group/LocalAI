@@ -14,6 +14,9 @@ from vllm import LLM, SamplingParams
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
+# If MAX_WORKERS are specified in the environment use it, otherwise default to 1
+MAX_WORKERS = int(os.environ.get('PYTHON_GRPC_MAX_WORKERS', '1'))
+
 # Implement the BackendServicer class with the service methods
 class BackendServicer(backend_pb2_grpc.BackendServicer):
     def generate(self,prompt, max_new_tokens):
@@ -49,11 +52,13 @@ class BackendServicer(backend_pb2_grpc.BackendServicer):
         return backend_pb2.Result(message="Model loaded successfully", success=True)
 
     def Predict(self, request, context):
+        if request.TopP == 0:
+            request.TopP = 0.9
+
         sampling_params = SamplingParams(temperature=request.Temperature, top_p=request.TopP)
         outputs = self.llm.generate([request.Prompt], sampling_params)
 
         generated_text = outputs[0].outputs[0].text
- 
         # Remove prompt from response if present
         if request.Prompt in generated_text:
             generated_text = generated_text.replace(request.Prompt, "")
@@ -68,7 +73,7 @@ class BackendServicer(backend_pb2_grpc.BackendServicer):
         return self.Predict(request, context)
 
 def serve(address):
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=MAX_WORKERS))
     backend_pb2_grpc.add_BackendServicer_to_server(BackendServicer(), server)
     server.add_insecure_port(address)
     server.start()

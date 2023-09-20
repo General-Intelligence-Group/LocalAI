@@ -47,6 +47,8 @@ github.com/go-skynet/go-llama.cpp v0.0.0-20230909065732-4145bd5555ca h1:+Iw2vGya
 github.com/go-skynet/go-llama.cpp v0.0.0-20230909065732-4145bd5555ca/go.mod h1:VGPpMv2UMxRgBiDIFrs7AGMzrX884K0Vy8tqYu3if/Q=
 github.com/go-skynet/go-llama.cpp v0.0.0-20230913071548-cc8a123bf8d5 h1:58+jbhheEWBCPIFF2LrurZSO3M/9uGVUUT50vtHT9EQ=
 github.com/go-skynet/go-llama.cpp v0.0.0-20230913071548-cc8a123bf8d5/go.mod h1:VGPpMv2UMxRgBiDIFrs7AGMzrX884K0Vy8tqYu3if/Q=
+github.com/go-skynet/go-llama.cpp v0.0.0-20230916071220-b471eb7d8c93 h1:aJQn0Lb5TQtSXw5hK+kAUuaUjsXwDXyEItzI9U+GiOA=
+github.com/go-skynet/go-llama.cpp v0.0.0-20230916071220-b471eb7d8c93/go.mod h1:VGPpMv2UMxRgBiDIFrs7AGMzrX884K0Vy8tqYu3if/Q=
 github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0/go.mod h1:fyg7847qk6SyHyPtNmDHnmrv/HOrqktSC+C9fM+CJOE=
 github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 h1:tfuBGBXKqDEevZMzYi5KSi8KkcZtzBcTgAUUtapy0OI=
 github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572/go.mod h1:9Pwr4B2jHnOSGXyyzV8ROjYa2ojvAY6HCGYYfMoC3Ls=
@@ -137,6 +139,8 @@ github.com/nomic-ai/gpt4all/gpt4all-bindings/golang v0.0.0-20230912211602-f0735e
 github.com/nomic-ai/gpt4all/gpt4all-bindings/golang v0.0.0-20230912211602-f0735efa7ddd/go.mod h1:4T3CHXyrt+7FQHXaxULZfPjHbD8/99WuDDJa0YVZARI=
 github.com/nomic-ai/gpt4all/gpt4all-bindings/golang v0.0.0-20230914010144-cf4eb530cee4 h1:1+Tq0WHdQwuV0IeBa3vfbojM9UWCqKlOr4C9lJklGeo=
 github.com/nomic-ai/gpt4all/gpt4all-bindings/golang v0.0.0-20230914010144-cf4eb530cee4/go.mod h1:4T3CHXyrt+7FQHXaxULZfPjHbD8/99WuDDJa0YVZARI=
+github.com/nomic-ai/gpt4all/gpt4all-bindings/golang v0.0.0-20230916184256-e86c63750de2 h1:nBbgd4ORk4pubuh/kugHw5Sdytt+SxtJLEQ+vJfK6Ko=
+github.com/nomic-ai/gpt4all/gpt4all-bindings/golang v0.0.0-20230916184256-e86c63750de2/go.mod h1:4T3CHXyrt+7FQHXaxULZfPjHbD8/99WuDDJa0YVZARI=
 github.com/nwaples/rardecode v1.1.0 h1:vSxaY8vQhOcVr4mm5e8XllHWTiM4JF507A0Katqw7MQ=
 github.com/nwaples/rardecode v1.1.0/go.mod h1:5DzqNKiOdpKKBH87u8VlvAnPZMXcGRhxWkRpHbbfGS0=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
@@ -217,6 +221,8 @@ github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6Kllzaw
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasthttp v1.49.0 h1:9FdvCpmxB74LH4dPb7IJ1cOSsluR07XG3I1txXWwJpE=
 github.com/valyala/fasthttp v1.49.0/go.mod h1:k2zXd82h/7UZc3VOdJ2WaUqt1uZ/XpXAfE9i+HBC3lA=
+github.com/valyala/fasthttp v1.50.0 h1:H7fweIlBm0rXLs2q0XbalvJ6r0CUPFWK3/bB4N13e9M=
+github.com/valyala/fasthttp v1.50.0/go.mod h1:k2zXd82h/7UZc3VOdJ2WaUqt1uZ/XpXAfE9i+HBC3lA=
 github.com/valyala/tcplisten v1.0.0 h1:rBHj/Xf+E1tRGZyWIWwJDiRY0zc1Js+CV5DqwacVSA8=
 github.com/valyala/tcplisten v1.0.0/go.mod h1:T0xQ8SeCZGxckz9qRXTfG43PvQ/mcWh7FwZEA7Ioqkc=
 github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 h1:nIPpBwaJSVYIxUFsDv3M8ofmx9yWTog9BfvIu0q41lo=
