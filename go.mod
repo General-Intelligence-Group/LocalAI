@@ -9,7 +9,7 @@ require (
 	github.com/go-skynet/bloomz.cpp v0.0.0-20230529155654-1834e77b83fa
 	github.com/go-skynet/go-bert.cpp v0.0.0-20230716133540-6abe312cded1
 	github.com/go-skynet/go-ggml-transformers.cpp v0.0.0-20230714203132-ffb09d7dd71e
-	github.com/go-skynet/go-llama.cpp v0.0.0-20230916071220-b471eb7d8c93
+	github.com/go-skynet/go-llama.cpp v0.0.0-20230929170139-79f95875ceb3
 	github.com/gofiber/fiber/v2 v2.49.2
 	github.com/google/uuid v1.3.1
 	github.com/hashicorp/go-multierror v1.1.1
@@ -20,14 +20,14 @@ require (
 	github.com/mudler/go-ggllm.cpp v0.0.0-20230709223052-862477d16eef
 	github.com/mudler/go-processmanager v0.0.0-20230818213616-f204007f963c
 	github.com/mudler/go-stable-diffusion v0.0.0-20230605122230-d89260f598af
-	github.com/nomic-ai/gpt4all/gpt4all-bindings/golang v0.0.0-20230916184256-e86c63750de2
+	github.com/nomic-ai/gpt4all/gpt4all-bindings/golang v0.0.0-20230927182421-6711bddc4c34
 	github.com/onsi/ginkgo/v2 v2.12.1
-	github.com/onsi/gomega v1.27.10
+	github.com/onsi/gomega v1.28.0
 	github.com/otiai10/openaigo v1.6.0
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
-	github.com/rs/zerolog v1.30.0
-	github.com/sashabaranov/go-openai v1.15.3
-	github.com/tmc/langchaingo v0.0.0-20230923172951-2c309cf27956
+	github.com/rs/zerolog v1.31.0
+	github.com/sashabaranov/go-openai v1.15.4
+	github.com/tmc/langchaingo v0.0.0-20230929160525-e16b77704b8d
 	github.com/urfave/cli/v2 v2.25.7
 	github.com/valyala/fasthttp v1.50.0
 	google.golang.org/grpc v1.58.2
@@ -40,7 +40,7 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
-	github.com/shirou/gopsutil/v3 v3.23.8
+	github.com/shirou/gopsutil/v3 v3.23.9
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
