@@ -4,9 +4,11 @@ GOVET=$(GOCMD) vet
 BINARY_NAME=local-ai
 
 # llama.cpp versions
-GOLLAMA_VERSION?=1676dcd7a139b6cdfbaea5fd67f46dc25d9d8bcf
+GOLLAMA_VERSION?=aeba71ee842819da681ea537e78846dc75949ac0
 
 GOLLAMA_STABLE_VERSION?=50cee7712066d9e38306eccadcfbb44ea87df4b7
+
+CPPLLAMA_VERSION?=9d02956443e5c1ded29b7b5ed8a21bc01ba6f563
 
 # gpt4all version
 GPT4ALL_REPO?=https://github.com/nomic-ai/gpt4all
@@ -28,14 +30,8 @@ BERT_VERSION?=6abe312cded14042f6b7c3cd8edf082713334a4d
 # go-piper version
 PIPER_VERSION?=56b8a81b4760a6fbee1a82e62f007ae7e8f010a7
 
-# go-bloomz version
-BLOOMZ_VERSION?=1834e77b83faafe912ad4092ccf7f77937349e2f
-
 # stablediffusion version
 STABLEDIFFUSION_VERSION?=d89260f598afb809279bc72aa0107b4292587632
-
-# Go-ggllm
-GOGGLLM_VERSION?=862477d16eefb0805261c19c9b0d053e3b2b684b
 
 export BUILD_TYPE?=
 export STABLE_BUILD_TYPE?=$(BUILD_TYPE)
@@ -44,6 +40,10 @@ CGO_LDFLAGS?=
 CUDA_LIBPATH?=/usr/local/cuda/lib64/
 GO_TAGS?=
 BUILD_ID?=git
+
+TEST_DIR=/tmp/test
+
+RANDOM := $(shell bash -c 'echo $$RANDOM')
 
 VERSION?=$(shell git describe --always --tags || echo "dev" )
 # go tool nm ./local-ai | grep Commit
@@ -61,6 +61,9 @@ YELLOW := $(shell tput -Txterm setaf 3)
 WHITE  := $(shell tput -Txterm setaf 7)
 CYAN   := $(shell tput -Txterm setaf 6)
 RESET  := $(shell tput -Txterm sgr0)
+
+# Default Docker bridge IP
+E2E_BRIDGE_IP?=172.17.0.1
 
 ifndef UNAME_S
 UNAME_S := $(shell uname -s)
@@ -120,7 +123,13 @@ ifeq ($(findstring tts,$(GO_TAGS)),tts)
 	OPTIONAL_GRPC+=backend-assets/grpc/piper
 endif
 
-GRPC_BACKENDS?=backend-assets/grpc/langchain-huggingface backend-assets/grpc/falcon-ggml backend-assets/grpc/bert-embeddings backend-assets/grpc/falcon backend-assets/grpc/bloomz backend-assets/grpc/llama backend-assets/grpc/llama-stable backend-assets/grpc/gpt4all backend-assets/grpc/dolly backend-assets/grpc/gpt2 backend-assets/grpc/gptj backend-assets/grpc/gptneox backend-assets/grpc/mpt backend-assets/grpc/replit backend-assets/grpc/starcoder backend-assets/grpc/rwkv backend-assets/grpc/whisper $(OPTIONAL_GRPC)
+ALL_GRPC_BACKENDS=backend-assets/grpc/langchain-huggingface backend-assets/grpc/falcon-ggml backend-assets/grpc/bert-embeddings backend-assets/grpc/llama backend-assets/grpc/llama-cpp backend-assets/grpc/llama-stable backend-assets/grpc/gpt4all backend-assets/grpc/dolly backend-assets/grpc/gpt2 backend-assets/grpc/gptj backend-assets/grpc/gptneox backend-assets/grpc/mpt backend-assets/grpc/replit backend-assets/grpc/starcoder backend-assets/grpc/rwkv backend-assets/grpc/whisper $(OPTIONAL_GRPC)
+GRPC_BACKENDS?=$(ALL_GRPC_BACKENDS) $(OPTIONAL_GRPC)
+
+# If empty, then we build all
+ifeq ($(GRPC_BACKENDS),)
+	GRPC_BACKENDS=$(ALL_GRPC_BACKENDS)
+endif
 
 .PHONY: all test build vendor
 
@@ -130,14 +139,6 @@ all: help
 gpt4all:
 	git clone --recurse-submodules $(GPT4ALL_REPO) gpt4all
 	cd gpt4all && git checkout -b build $(GPT4ALL_VERSION) && git submodule update --init --recursive --depth 1
-
-## go-ggllm
-go-ggllm:
-	git clone --recurse-submodules https://github.com/mudler/go-ggllm.cpp go-ggllm
-	cd go-ggllm && git checkout -b build $(GOGGLLM_VERSION) && git submodule update --init --recursive --depth 1
-
-go-ggllm/libggllm.a: go-ggllm
-	$(MAKE) -C go-ggllm BUILD_TYPE=$(BUILD_TYPE) libggllm.a
 
 ## go-piper
 go-piper:
@@ -164,14 +165,6 @@ go-rwkv:
 
 go-rwkv/librwkv.a: go-rwkv
 	cd go-rwkv && cd rwkv.cpp &&	cmake . -DRWKV_BUILD_SHARED_LIBRARY=OFF &&	cmake --build . && 	cp librwkv.a ..
-
-## bloomz
-bloomz:
-	git clone --recurse-submodules https://github.com/go-skynet/bloomz.cpp bloomz
-	cd bloomz && git checkout -b build $(BLOOMZ_VERSION) && git submodule update --init --recursive --depth 1
-
-bloomz/libbloomz.a: bloomz
-	cd bloomz && make libbloomz.a
 
 go-bert/libgobert.a: go-bert
 	$(MAKE) -C go-bert libgobert.a
@@ -223,10 +216,10 @@ go-llama/libbinding.a: go-llama
 go-llama-stable/libbinding.a: go-llama-stable
 	$(MAKE) -C go-llama-stable BUILD_TYPE=$(STABLE_BUILD_TYPE) libbinding.a
 
-go-piper/libpiper_binding.a:
+go-piper/libpiper_binding.a: go-piper
 	$(MAKE) -C go-piper libpiper_binding.a example/main
 
-get-sources: go-llama go-llama-stable go-ggllm go-ggml-transformers gpt4all go-piper go-rwkv whisper.cpp go-bert bloomz go-stable-diffusion
+get-sources: go-llama go-llama-stable go-ggml-transformers gpt4all go-piper go-rwkv whisper.cpp go-bert go-stable-diffusion
 	touch $@
 
 replace:
@@ -235,10 +228,8 @@ replace:
 	$(GOCMD) mod edit -replace github.com/donomii/go-rwkv.cpp=$(shell pwd)/go-rwkv
 	$(GOCMD) mod edit -replace github.com/ggerganov/whisper.cpp=$(shell pwd)/whisper.cpp
 	$(GOCMD) mod edit -replace github.com/go-skynet/go-bert.cpp=$(shell pwd)/go-bert
-	$(GOCMD) mod edit -replace github.com/go-skynet/bloomz.cpp=$(shell pwd)/bloomz
 	$(GOCMD) mod edit -replace github.com/mudler/go-stable-diffusion=$(shell pwd)/go-stable-diffusion
 	$(GOCMD) mod edit -replace github.com/mudler/go-piper=$(shell pwd)/go-piper
-	$(GOCMD) mod edit -replace github.com/mudler/go-ggllm.cpp=$(shell pwd)/go-ggllm
 
 prepare-sources: get-sources replace
 	$(GOCMD) mod download
@@ -254,9 +245,7 @@ rebuild: ## Rebuilds the project
 	$(MAKE) -C whisper.cpp clean
 	$(MAKE) -C go-stable-diffusion clean
 	$(MAKE) -C go-bert clean
-	$(MAKE) -C bloomz clean
 	$(MAKE) -C go-piper clean
-	$(MAKE) -C go-ggllm clean
 	$(MAKE) build
 
 prepare: prepare-sources $(OPTIONAL_TARGETS)
@@ -274,12 +263,11 @@ clean: ## Remove build related file
 	rm -rf ./backend-assets
 	rm -rf ./go-rwkv
 	rm -rf ./go-bert
-	rm -rf ./bloomz
 	rm -rf ./whisper.cpp
 	rm -rf ./go-piper
-	rm -rf ./go-ggllm
 	rm -rf $(BINARY_NAME)
 	rm -rf release/
+	$(MAKE) -C backend/cpp/llama clean
 
 ## Build:
 
@@ -325,6 +313,26 @@ test: prepare test-models/testmodel grpcs
 	$(MAKE) test-llama-gguf
 	$(MAKE) test-tts
 	$(MAKE) test-stablediffusion
+
+prepare-e2e:
+	mkdir -p $(TEST_DIR)
+	cp -rfv $(abspath ./tests/e2e-fixtures)/gpu.yaml $(TEST_DIR)/gpu.yaml
+	test -e $(TEST_DIR)/ggllm-test-model.bin || wget -q https://huggingface.co/TheBloke/CodeLlama-7B-Instruct-GGUF/resolve/main/codellama-7b-instruct.Q2_K.gguf -O $(TEST_DIR)/ggllm-test-model.bin
+	docker build --build-arg BUILD_GRPC=true --build-arg GRPC_BACKENDS="$(GRPC_BACKENDS)" --build-arg IMAGE_TYPE=core --build-arg BUILD_TYPE=$(BUILD_TYPE) --build-arg CUDA_MAJOR_VERSION=11 --build-arg CUDA_MINOR_VERSION=7 --build-arg FFMPEG=true -t localai-tests .
+
+run-e2e-image:
+	ls -liah $(abspath ./tests/e2e-fixtures)
+	docker run -p 5390:8080 -e MODELS_PATH=/models -e THREADS=1 -e DEBUG=true -d --rm -v $(TEST_DIR):/models --gpus all --name e2e-tests-$(RANDOM) localai-tests
+
+test-e2e:
+	@echo 'Running e2e tests'
+	BUILD_TYPE=$(BUILD_TYPE) \
+	LOCALAI_API=http://$(E2E_BRIDGE_IP):5390/v1 \
+	$(GOCMD) run github.com/onsi/ginkgo/v2/ginkgo --flake-attempts 5 -v -r ./tests/e2e
+
+teardown-e2e:
+	rm -rf $(TEST_DIR) || true
+	docker stop $$(docker ps -q --filter ancestor=localai-tests)
 
 test-gpt4all: prepare-test
 	TEST_DIR=$(abspath ./)/test-dir/ FIXTURES=$(abspath ./)/tests/fixtures CONFIG_FILE=$(abspath ./)/test-models/config.yaml MODELS_PATH=$(abspath ./)/test-models \
@@ -382,10 +390,6 @@ protogen-python:
 backend-assets/grpc:
 	mkdir -p backend-assets/grpc
 
-backend-assets/grpc/falcon: backend-assets/grpc go-ggllm/libggllm.a
-	CGO_LDFLAGS="$(CGO_LDFLAGS)" C_INCLUDE_PATH=$(shell pwd)/go-ggllm LIBRARY_PATH=$(shell pwd)/go-ggllm \
-	$(GOCMD) build -ldflags "$(LD_FLAGS)" -tags "$(GO_TAGS)" -o backend-assets/grpc/falcon ./cmd/grpc/falcon/
-
 backend-assets/grpc/llama: backend-assets/grpc go-llama/libbinding.a
 	$(GOCMD) mod edit -replace github.com/go-skynet/go-llama.cpp=$(shell pwd)/go-llama
 	CGO_LDFLAGS="$(CGO_LDFLAGS)" C_INCLUDE_PATH=$(shell pwd)/go-llama LIBRARY_PATH=$(shell pwd)/go-llama \
@@ -393,6 +397,16 @@ backend-assets/grpc/llama: backend-assets/grpc go-llama/libbinding.a
 # TODO: every binary should have its own folder instead, so can have different metal implementations
 ifeq ($(BUILD_TYPE),metal)
 	cp go-llama/build/bin/ggml-metal.metal backend-assets/grpc/
+endif
+
+backend/cpp/llama/grpc-server:
+	LLAMA_VERSION=$(CPPLLAMA_VERSION) $(MAKE) -C backend/cpp/llama grpc-server
+
+backend-assets/grpc/llama-cpp: backend-assets/grpc backend/cpp/llama/grpc-server
+	cp -rfv backend/cpp/llama/grpc-server backend-assets/grpc/llama-cpp
+# TODO: every binary should have its own folder instead, so can have different metal implementations
+ifeq ($(BUILD_TYPE),metal)
+	cp backend/cpp/llama/llama.cpp/build/bin/ggml-metal.metal backend-assets/grpc/
 endif
 
 backend-assets/grpc/llama-stable: backend-assets/grpc go-llama-stable/libbinding.a
@@ -440,10 +454,6 @@ backend-assets/grpc/rwkv: backend-assets/grpc go-rwkv/librwkv.a
 	CGO_LDFLAGS="$(CGO_LDFLAGS)" C_INCLUDE_PATH=$(shell pwd)/go-rwkv LIBRARY_PATH=$(shell pwd)/go-rwkv \
 	$(GOCMD) build -ldflags "$(LD_FLAGS)" -tags "$(GO_TAGS)" -o backend-assets/grpc/rwkv ./cmd/grpc/rwkv/
 
-backend-assets/grpc/bloomz: backend-assets/grpc bloomz/libbloomz.a
-	CGO_LDFLAGS="$(CGO_LDFLAGS)" C_INCLUDE_PATH=$(shell pwd)/bloomz LIBRARY_PATH=$(shell pwd)/bloomz \
-	$(GOCMD) build -ldflags "$(LD_FLAGS)" -tags "$(GO_TAGS)" -o backend-assets/grpc/bloomz ./cmd/grpc/bloomz/
-
 backend-assets/grpc/bert-embeddings: backend-assets/grpc go-bert/libgobert.a
 	CGO_LDFLAGS="$(CGO_LDFLAGS)" C_INCLUDE_PATH=$(shell pwd)/go-bert LIBRARY_PATH=$(shell pwd)/go-bert \
 	$(GOCMD) build -ldflags "$(LD_FLAGS)" -tags "$(GO_TAGS)" -o backend-assets/grpc/bert-embeddings ./cmd/grpc/bert-embeddings/
@@ -451,9 +461,12 @@ backend-assets/grpc/bert-embeddings: backend-assets/grpc go-bert/libgobert.a
 backend-assets/grpc/langchain-huggingface: backend-assets/grpc
 	$(GOCMD) build -ldflags "$(LD_FLAGS)" -tags "$(GO_TAGS)" -o backend-assets/grpc/langchain-huggingface ./cmd/grpc/langchain-huggingface/
 
-backend-assets/grpc/stablediffusion: backend-assets/grpc go-stable-diffusion/libstablediffusion.a
-	CGO_LDFLAGS="$(CGO_LDFLAGS)" C_INCLUDE_PATH=$(shell pwd)/go-stable-diffusion/ LIBRARY_PATH=$(shell pwd)/go-stable-diffusion/ \
-	$(GOCMD) build -ldflags "$(LD_FLAGS)" -tags "$(GO_TAGS)" -o backend-assets/grpc/stablediffusion ./cmd/grpc/stablediffusion/
+backend-assets/grpc/stablediffusion: backend-assets/grpc
+	if [ ! -f backend-assets/grpc/stablediffusion ]; then \
+		$(MAKE) go-stable-diffusion/libstablediffusion.a; \
+		CGO_LDFLAGS="$(CGO_LDFLAGS)" C_INCLUDE_PATH=$(shell pwd)/go-stable-diffusion/ LIBRARY_PATH=$(shell pwd)/go-stable-diffusion/ \
+		$(GOCMD) build -ldflags "$(LD_FLAGS)" -tags "$(GO_TAGS)" -o backend-assets/grpc/stablediffusion ./cmd/grpc/stablediffusion/; \
+	fi
 
 backend-assets/grpc/piper: backend-assets/grpc backend-assets/espeak-ng-data go-piper/libpiper_binding.a
 	CGO_LDFLAGS="$(CGO_LDFLAGS)" LIBRARY_PATH=$(shell pwd)/go-piper \

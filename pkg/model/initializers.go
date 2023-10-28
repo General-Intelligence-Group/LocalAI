@@ -17,7 +17,7 @@ import (
 const (
 	LlamaBackend        = "llama"
 	LlamaStableBackend  = "llama-stable"
-	BloomzBackend       = "bloomz"
+	LLamaCPP            = "llama-cpp"
 	StarcoderBackend    = "starcoder"
 	GPTJBackend         = "gptj"
 	DollyBackend        = "dolly"
@@ -29,7 +29,6 @@ const (
 	Gpt4AllMptBackend   = "gpt4all-mpt"
 	Gpt4AllJBackend     = "gpt4all-j"
 	Gpt4All             = "gpt4all"
-	FalconBackend       = "falcon"
 	FalconGGMLBackend   = "falcon-ggml"
 
 	BertEmbeddingsBackend  = "bert-embeddings"
@@ -41,10 +40,10 @@ const (
 )
 
 var AutoLoadBackends []string = []string{
-	LlamaBackend,
+	LLamaCPP,
 	LlamaStableBackend,
+	LlamaBackend,
 	Gpt4All,
-	FalconBackend,
 	GPTNeoXBackend,
 	BertEmbeddingsBackend,
 	FalconGGMLBackend,
@@ -54,7 +53,6 @@ var AutoLoadBackends []string = []string{
 	MPTBackend,
 	ReplitBackend,
 	StarcoderBackend,
-	BloomzBackend,
 	RwkvBackend,
 	WhisperBackend,
 	StableDiffusionBackend,
@@ -175,11 +173,6 @@ func (ml *ModelLoader) BackendLoader(opts ...Option) (model *grpc.Client, err er
 	}
 
 	switch backend {
-	case LlamaBackend, LlamaStableBackend, GPTJBackend, DollyBackend,
-		MPTBackend, Gpt2Backend, FalconBackend,
-		GPTNeoXBackend, ReplitBackend, StarcoderBackend, BloomzBackend,
-		RwkvBackend, LCHuggingFaceBackend, BertEmbeddingsBackend, FalconGGMLBackend, StableDiffusionBackend, WhisperBackend:
-		return ml.LoadModel(o.model, ml.grpcModel(backend, o))
 	case Gpt4AllLlamaBackend, Gpt4AllMptBackend, Gpt4AllJBackend, Gpt4All:
 		o.gRPCOptions.LibrarySearchPath = filepath.Join(o.assetDir, "backend-assets", "gpt4all")
 		return ml.LoadModel(o.model, ml.grpcModel(Gpt4All, o))
@@ -187,7 +180,7 @@ func (ml *ModelLoader) BackendLoader(opts ...Option) (model *grpc.Client, err er
 		o.gRPCOptions.LibrarySearchPath = filepath.Join(o.assetDir, "backend-assets", "espeak-ng-data")
 		return ml.LoadModel(o.model, ml.grpcModel(PiperBackend, o))
 	default:
-		return nil, fmt.Errorf("backend unsupported: %s", o.backendString)
+		return ml.LoadModel(o.model, ml.grpcModel(backend, o))
 	}
 }
 
